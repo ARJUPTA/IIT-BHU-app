@@ -8,6 +8,8 @@ import 'package:iit_app/screens/home/home_widgets.dart';
 import 'package:iit_app/screens/home/search_workshop.dart';
 import 'package:iit_app/screens/drawer.dart';
 import 'package:iit_app/ui/colorPicker.dart';
+import 'package:iit_app/waste/model.dart';
+import 'package:iit_app/waste/widgets.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -211,6 +213,8 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  int currentTab = 0;
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -226,34 +230,37 @@ class _HomeScreenState extends State<HomeScreen>
               backgroundColor: ColorConstants.homeBackground,
               drawer: SideBar(context: context),
               floatingActionButton: homeFAB(context, fabKey: fabKey),
-              appBar: homeAppBar(context,
-                  searchBarWidget: searchBarWidget, fabKey: fabKey),
+              // appBar: homeAppBar(context,
+              //     searchBarWidget: searchBarWidget, fabKey: fabKey),
               body: GestureDetector(
                 onTap: () {
                   if (fabKey.currentState.isOpen) {
                     fabKey.currentState.close();
                   }
                 },
-                child: Stack(
+                child: Row(
                   children: [
-                    Container(
-                      margin: EdgeInsets.fromLTRB(12, 10, 12, 0),
-                      decoration: BoxDecoration(
-                          color: ColorConstants.workshopContainerBackground,
-                          borderRadius: BorderRadius.only(
-                              topLeft: const Radius.circular(40.0),
-                              topRight: const Radius.circular(40.0))),
-                      child: ValueListenableBuilder(
-                        valueListenable: searchListener,
-                        builder: (context, isSearching, child) {
-                          return HomeChild(
-                            context: context,
-                            searchBarWidget: searchBarWidget,
-                            tabController: _tabController,
-                            isSearching: isSearching,
-                            fabKey: fabKey,
-                          );
-                        },
+                    Expanded(flex: 0, child: sideNavBar(context)),
+                    Expanded(
+                      child: Container(
+                        margin: EdgeInsets.fromLTRB(12, 10, 12, 0),
+                        decoration: BoxDecoration(
+                            color: ColorConstants.workshopContainerBackground,
+                            borderRadius: BorderRadius.only(
+                                topLeft: const Radius.circular(40.0),
+                                topRight: const Radius.circular(40.0))),
+                        child: ValueListenableBuilder(
+                          valueListenable: searchListener,
+                          builder: (context, isSearching, child) {
+                            return HomeChild(
+                              context: context,
+                              searchBarWidget: searchBarWidget,
+                              tabController: _tabController,
+                              isSearching: isSearching,
+                              fabKey: fabKey,
+                            );
+                          },
+                        ),
                       ),
                     ),
                     AppConstants.chooseColorPaletEnabled
@@ -266,6 +273,86 @@ class _HomeScreenState extends State<HomeScreen>
           },
         ),
       ),
+    );
+  }
+
+  Widget sideNavBar(BuildContext ctext) {
+    return Container(
+      padding: EdgeInsets.only(top: 20),
+      width: 70,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          stops: [0.3, 0.7],
+          colors: [
+            Color.fromRGBO(207, 38, 138, 1),
+            Color.fromRGBO(107, 7, 114, 1),
+          ],
+        ),
+      ),
+      child: Column(
+        children: [
+          Builder(
+            builder: (context) => GestureDetector(
+              onTap: () {
+                Scaffold.of(context).openDrawer();
+                if (fabKey.currentState.isOpen) {
+                  fabKey.currentState.close();
+                }
+              },
+              child: AppConstants.isGuest
+                  ? Icon(
+                      Icons.menu,
+                      color: Colors.black,
+                      size: 30,
+                    )
+                  : null,
+            ),
+          ),
+          Divider(color: Colors.white, height: 30),
+          Expanded(
+            child: ListView.separated(
+              separatorBuilder: (context, index) {
+                return Divider(color: Colors.grey, height: 40);
+              },
+              itemBuilder: (context, index) {
+                return NavBarTile(
+                  icon: items[index].icon,
+                  isSelected: currentTab == index,
+                  onTap: () {
+                    setState(() {
+                      currentTab = index;
+                    });
+                  },
+                );
+              },
+              itemCount: items.length,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class NavBarTile extends StatefulWidget {
+  final IconData icon;
+  final bool isSelected;
+  final Function onTap;
+  NavBarTile({this.icon, this.isSelected, this.onTap});
+  @override
+  _NavBarTileState createState() => _NavBarTileState();
+}
+
+class _NavBarTileState extends State<NavBarTile> {
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: widget.onTap,
+      child: widget.isSelected
+          ? Icon(widget.icon, size: 50)
+          : Icon(widget.icon, size: 30),
     );
   }
 }
