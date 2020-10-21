@@ -7,9 +7,8 @@ import 'package:iit_app/screens/home/floating_action_button.dart';
 import 'package:iit_app/screens/home/home_widgets.dart';
 import 'package:iit_app/screens/home/search_workshop.dart';
 import 'package:iit_app/screens/drawer.dart';
+import 'package:iit_app/screens/home/side_nav.dart';
 import 'package:iit_app/ui/colorPicker.dart';
-import 'package:iit_app/waste/model.dart';
-import 'package:iit_app/waste/widgets.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -238,12 +237,12 @@ class _HomeScreenState extends State<HomeScreen>
                     fabKey.currentState.close();
                   }
                 },
-                child: Row(
+                child: Stack(
                   children: [
-                    Expanded(flex: 0, child: sideNavBar(context)),
-                    Expanded(
+                    Align(
+                      alignment: Alignment.centerRight,
                       child: Container(
-                        margin: EdgeInsets.fromLTRB(12, 10, 12, 0),
+                        width: MediaQuery.of(context).size.width * 0.78,
                         decoration: BoxDecoration(
                             color: ColorConstants.workshopContainerBackground,
                             borderRadius: BorderRadius.only(
@@ -265,7 +264,12 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     AppConstants.chooseColorPaletEnabled
                         ? _colorSelectOptionRow(context)
-                        : Container()
+                        : Container(),
+                    CustomPaint(
+                      size: Size(double.infinity, double.infinity),
+                      foregroundPainter: SideNavPainter(),
+                    ),
+                    SideNav(fabKey: fabKey),
                   ],
                 ),
               ),
@@ -275,84 +279,75 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
+}
 
-  Widget sideNavBar(BuildContext ctext) {
+class SideNav extends StatefulWidget {
+  final GlobalKey<FabCircularMenuState> fabKey;
+  SideNav({this.fabKey});
+  @override
+  _SideNavState createState() => _SideNavState();
+}
+
+class _SideNavState extends State<SideNav> {
+  SideNavRouteItem selected;
+
+  @override
+  void initState() {
+    super.initState();
+    selected = screenList.first;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(top: 20),
-      width: 70,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          stops: [0.3, 0.7],
-          colors: [
-            Color.fromRGBO(207, 38, 138, 1),
-            Color.fromRGBO(107, 7, 114, 1),
-          ],
-        ),
-      ),
+      width: MediaQuery.of(context).size.width * 0.3,
+      margin: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.13),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Builder(
-            builder: (context) => GestureDetector(
-              onTap: () {
-                Scaffold.of(context).openDrawer();
-                if (fabKey.currentState.isOpen) {
-                  fabKey.currentState.close();
-                }
-              },
-              child: AppConstants.isGuest
-                  ? Icon(
-                      Icons.menu,
-                      color: Colors.black,
-                      size: 30,
-                    )
-                  : null,
+          Container(
+            margin: EdgeInsets.only(left: 10),
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              radius: 35,
+              child: Icon(
+                selected.icon,
+                size: 50,
+                color: Colors.black,
+              ),
             ),
           ),
-          Divider(color: Colors.white, height: 30),
-          Expanded(
-            child: ListView.separated(
-              separatorBuilder: (context, index) {
-                return Divider(color: Colors.grey, height: 40);
-              },
+          SizedBox(height: 40),
+          Flexible(
+            child: ListView.builder(
               itemBuilder: (context, index) {
-                return NavBarTile(
-                  icon: items[index].icon,
-                  isSelected: currentTab == index,
-                  onTap: () {
-                    setState(() {
-                      currentTab = index;
-                    });
-                  },
-                );
+                if (selected.key != screenList.elementAt(index).key)
+                  return Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: NavBarTile(
+                        screen: screenList.elementAt(index),
+                        onTap: () {
+                          if (widget.fabKey.currentState.isOpen) {
+                            widget.fabKey.currentState.close();
+                          }
+                          //TODO: Making the navigation possible via pushing
+                          // Navigator.of(context).pushNamed("/mess");
+                          selected = screenList.elementAt(index);
+                          setState(() {});
+                        },
+                      ),
+                    ),
+                  );
+                else
+                  return Container();
               },
-              itemCount: items.length,
+              itemCount: screenList.length,
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class NavBarTile extends StatefulWidget {
-  final IconData icon;
-  final bool isSelected;
-  final Function onTap;
-  NavBarTile({this.icon, this.isSelected, this.onTap});
-  @override
-  _NavBarTileState createState() => _NavBarTileState();
-}
-
-class _NavBarTileState extends State<NavBarTile> {
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: widget.onTap,
-      child: widget.isSelected
-          ? Icon(widget.icon, size: 50)
-          : Icon(widget.icon, size: 30),
     );
   }
 }
